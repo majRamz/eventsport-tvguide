@@ -1,0 +1,17 @@
+name: eventsport_tvguide
+description: >-
+  Guide TV des matchs de football pour l'app Event Sport : pour chaque match,
+  les chaînes françaises qui le diffusent (fichier tv_guide.json publié
+  chaque jour).
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  http: ^1.6.0
+  xml: ^7.1.0
+
+dev_dependencies:
+  test: ^1.25.0
