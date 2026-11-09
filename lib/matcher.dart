@@ -1,5 +1,6 @@
 // Correspondance matchs ↔ programmes d'un guide TV (XMLTV).
 // Utilisé par bin/build_tv_guide.dart.
+import 'countries.dart';
 
 /// Un programme du guide TV.
 class TvProgramme {
@@ -155,6 +156,10 @@ String normalize(String s) {
 List<List<String>> _teamPhrases(String team) {
   final n = normalize(team);
   final aliases = <String>{...?_aliases[n]};
+  // Sélections : nom français du pays (« Italy » → « italie »).
+  for (final entry in countryNamesFr.entries) {
+    if (normalize(entry.key) == n) aliases.add(normalize(entry.value));
+  }
   for (final entry in _aliases.entries) {
     if (n.contains(entry.key)) aliases.addAll(entry.value);
   }

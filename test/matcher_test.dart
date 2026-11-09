@@ -79,4 +79,21 @@ void main() {
     expect(normalize('Atlético de Madrid / Séville'),
         'atletico de madrid seville');
   });
+
+  test('sélections : noms anglais (ESPN) ↔ français (guide TV)', () {
+    final result = matchFixturesToChannels(
+      [
+        FixtureRef(
+            id: 'it', kickoffUtc: kickoff, home: 'Italy', away: 'France'),
+        FixtureRef(
+            id: 'tr', kickoffUtc: kickoff, home: 'Türkiye', away: 'Czechia'),
+      ],
+      [
+        prog('TF1', 'Football : Ligue des nations', 'Italie / France'),
+        prog('beIN SPORTS 1', 'Turquie / Tchéquie', 'Ligue des nations'),
+      ],
+    );
+    expect(result['it'], ['TF1']);
+    expect(result['tr'], ['beIN SPORTS 1']);
+  });
 }
