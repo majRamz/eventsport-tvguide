@@ -55,7 +55,7 @@ Future<void> main(List<String> args) async {
 /// le début de la description des programmes des chaînes de sport.
 List<TvProgramme> _parseProgrammes(String xmlText, {required DateTime from}) {
   final sport = RegExp(
-      r'bein|canal|ligue 1|dazn|eurosport|equipe|m6|w9|tf1|tmc|france [2-4]|rmc|prime|amazon',
+      r'bein|canal|ligue 1|dazn|eurosport|quipe|m6|w9|tf1|tmc|france [2-4]|rmc|prime|amazon', // « quipe » : L'Équipe (É accentué)
       caseSensitive: false);
   final channelNames = <String, String>{};
   final programmes = <TvProgramme>[];

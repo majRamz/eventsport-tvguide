@@ -35,10 +35,12 @@ class FixtureRef {
 }
 
 /// Chaînes de sport retenues (on ignore les chaînes thématiques non sportives).
+/// Testée sur le nom de chaîne *normalisé* (sans accents ni ponctuation :
+/// « La chaîne L'Équipe » → « la chaine l equipe », « Canal+ Foot » →
+/// « canal foot »). Chaînes belges, suisses… volontairement exclues.
 final _sportChannel = RegExp(
-  r"bein|canal\+ (foot|sport|live|premier|ligue)|^canal\+$|ligue 1\+|dazn|"
-  r"eurosport|l.?equipe|^m6$|^w9$|^tf1$|^tmc$|^france [2-4]|rmc sport|prime video|amazon",
-  caseSensitive: false,
+  r"bein|^canal( (foot|sport|live|premier|ligue))?|ligue 1|dazn|eurosport|"
+  r"\bl ?equipe\b|^m6$|^w9$|^tf1$|^tmc$|^france [2-4]\b|rmc sport|prime video|amazon",
 );
 
 /// Noms ESPN (souvent anglais) → noms utilisés par les guides TV français.
@@ -192,8 +194,9 @@ Map<String, List<String>> matchFixturesToChannels(
   Duration after = const Duration(minutes: 20),
   int maxChannels = 3,
 }) {
-  final candidates =
-      programmes.where((p) => _sportChannel.hasMatch(p.channel)).toList();
+  final candidates = programmes
+      .where((p) => _sportChannel.hasMatch(normalize(p.channel)))
+      .toList();
   final phrases = {
     for (final f in fixtures)
       f.id: (home: _teamPhrases(f.home), away: _teamPhrases(f.away)),
