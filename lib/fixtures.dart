@@ -30,6 +30,7 @@ bool keepFixture(String league, FixtureRef f) =>
 /// par championnat et par mois. Les identifiants sont ceux de l'app
 /// (« espn-<id> »). Un championnat en erreur (identifiant inconnu d'ESPN,
 /// panne passagère) est signalé et ignoré : les autres restent calculés.
+/// Si *aucune* requête n'aboutit : [EspnUnavailableException].
 Future<List<FixtureRef>> fetchFixtures(DateTime from, DateTime to,
     {http.Client? client, void Function(String)? onWarning}) async {
   final warn = onWarning ?? print;
@@ -41,6 +42,7 @@ Future<List<FixtureRef>> fetchFixtures(DateTime from, DateTime to,
       '${d.year}${d.month.toString().padLeft(2, '0')}',
   };
   final fixtures = <FixtureRef>[];
+  var answered = 0; // requêtes ESPN réussies
   for (final league in leagues) {
     for (final month in months) {
       // `limit` : sans lui, ESPN renvoie au plus 100 matchs (un mois
@@ -61,8 +63,9 @@ Future<List<FixtureRef>> fetchFixtures(DateTime from, DateTime to,
         warn('    ⚠ ESPN $league $month : $e, ignoré');
       }
       if (body == null) continue;
+      answered++;
       for (final e in (body['events'] as List? ?? const [])) {
-        final f = _toFixture(e as Map<String, dynamic>);
+        final f = _toFixture(e as Map<String, dynamic>, league);
         if (f != null &&
             !f.kickoffUtc.isBefore(from) &&
             f.kickoffUtc.isBefore(to) &&
@@ -72,24 +75,54 @@ Future<List<FixtureRef>> fetchFixtures(DateTime from, DateTime to,
       }
     }
   }
+  // ESPN en panne partout : on échoue plutôt que de publier un guide vide
+  // (le workflow s'arrête, le tv_guide.json précédent reste en ligne).
+  if (answered == 0) {
+    throw EspnUnavailableException('aucune réponse ESPN sur '
+        '${leagues.length} championnats × ${months.length} mois');
+  }
   return fixtures;
 }
 
-FixtureRef? _toFixture(Map<String, dynamic> json) {
+/// Clé `matches` de tv_guide.json : détails des seuls matchs présents dans
+/// [channels] (ceux qu'une chaîne française diffuse).
+Map<String, Map<String, Object?>> buildMatches(
+        List<FixtureRef> fixtures, Map<String, List<String>> channels) =>
+    {
+      for (final f in fixtures)
+        if (channels.containsKey(f.id)) f.id: f.toJson(),
+    };
+
+/// Aucune requête ESPN n'a abouti pendant un calcul.
+class EspnUnavailableException implements Exception {
+  EspnUnavailableException(this.message);
+  final String message;
+  @override
+  String toString() => 'ESPN indisponible : $message';
+}
+
+FixtureRef? _toFixture(Map<String, dynamic> json, String league) {
   try {
     final comp = (json['competitions'] as List).first as Map<String, dynamic>;
     final teams = (comp['competitors'] as List).cast<Map<String, dynamic>>();
-    String name(String side) {
-      final t = teams.firstWhere((c) => c['homeAway'] == side)['team'] as Map;
-      // Nom complet : plus fiable pour les sélections (« Northern Ireland »).
-      return (t['displayName'] ?? t['shortDisplayName']) as String;
-    }
+    Map team(String side) =>
+        teams.firstWhere((c) => c['homeAway'] == side)['team'] as Map;
+    // Nom complet : plus fiable pour les sélections (« Northern Ireland »).
+    String name(String side) =>
+        (team(side)['displayName'] ?? team(side)['shortDisplayName']) as String;
+    String? text(Object? v) => v is String && v.isNotEmpty ? v : null;
+    final venue = comp['venue'] as Map?;
 
     return FixtureRef(
       id: 'espn-${json['id']}',
       kickoffUtc: DateTime.parse(json['date'] as String).toUtc(),
       home: name('home'),
       away: name('away'),
+      league: league,
+      homeLogo: text(team('home')['logo']),
+      awayLogo: text(team('away')['logo']),
+      venue: text(venue?['fullName']),
+      city: text((venue?['address'] as Map?)?['city']),
     );
   } catch (_) {
     return null;

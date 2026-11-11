@@ -20,8 +20,15 @@ Future<void> main(List<String> args) async {
   final now = DateTime.now().toUtc();
 
   stdout.writeln('1/3 Matchs (ESPN)…');
-  final fixtures = await fetchFixtures(
-      now.subtract(const Duration(days: 1)), now.add(const Duration(days: 6)));
+  final List<FixtureRef> fixtures;
+  try {
+    fixtures = await fetchFixtures(now.subtract(const Duration(days: 1)),
+        now.add(const Duration(days: 6)));
+  } on EspnUnavailableException catch (e) {
+    // Échec volontaire : le workflow ne déploie pas, l'ancien guide reste.
+    stderr.writeln('$e → tv_guide.json non modifié');
+    exit(1);
+  }
   stdout.writeln('    ${fixtures.length} matchs');
 
   stdout.writeln('2/3 Guide TV ($guideUrl)…');
@@ -42,6 +49,8 @@ Future<void> main(List<String> args) async {
     'generatedAt': now.toIso8601String(),
     'source': 'xmltvfr.fr',
     'channels': channels,
+    // Détails des matchs diffusés : secours de l'app si ESPN ne répond plus.
+    'matches': buildMatches(fixtures, channels),
   };
   File(out)
     ..createSync(recursive: true)
