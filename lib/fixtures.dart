@@ -43,8 +43,12 @@ Future<List<FixtureRef>> fetchFixtures(DateTime from, DateTime to,
   final fixtures = <FixtureRef>[];
   for (final league in leagues) {
     for (final month in months) {
-      final uri = Uri.https('site.api.espn.com',
-          '/apis/site/v2/sports/soccer/$league/scoreboard', {'dates': month});
+      // `limit` : sans lui, ESPN renvoie au plus 100 matchs (un mois
+      // d'amicaux en compte davantage). Même valeur que dans l'app.
+      final uri = Uri.https(
+          'site.api.espn.com',
+          '/apis/site/v2/sports/soccer/$league/scoreboard',
+          {'dates': month, 'limit': '500'});
       Map<String, dynamic>? body;
       try {
         final res = await c.get(uri);

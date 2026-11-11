@@ -61,7 +61,9 @@ void main() {
         }
       ],
     };
+    final queries = <Map<String, String>>[];
     final client = MockClient((req) async {
+      queries.add(req.url.queryParameters);
       if (req.url.path.contains('/caf.nations/')) {
         return http.Response(
             jsonEncode({
@@ -81,5 +83,8 @@ void main() {
     expect(fixtures.map((x) => x.id), ['espn-42']);
     expect(fixtures.single.away, 'Congo DR');
     expect(warnings, hasLength(leagues.length - 1));
+    // Pas de troncature à 100 matchs : chaque requête demande `limit=500`.
+    expect(queries, everyElement(containsPair('limit', '500')));
+    expect(queries, everyElement(containsPair('dates', '202611')));
   });
 }
