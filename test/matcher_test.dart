@@ -97,6 +97,21 @@ void main() {
     expect(result['tr'], ['beIN SPORTS 1']);
   });
 
+  test('sélections africaines : Congo DR → RD Congo, Cape Verde → Cap-Vert',
+      () {
+    final result = matchFixturesToChannels(
+      [
+        FixtureRef(
+            id: 'cv', kickoffUtc: kickoff, home: 'Congo DR', away: 'Cape Verde'),
+      ],
+      [
+        prog('beIN SPORTS 2', 'Football : Qualifications CAN',
+            'RD Congo / Cap-Vert'),
+      ],
+    );
+    expect(result['cv'], ['beIN SPORTS 2']);
+  });
+
   test('chaînes avec accents reconnues, chaînes étrangères ignorées', () {
     final result = matchFixturesToChannels(
       [
