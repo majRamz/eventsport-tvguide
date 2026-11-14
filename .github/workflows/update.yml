@@ -1,0 +1,44 @@
+# Chaque nuit : recalcule tv_guide.json et le publie sur GitHub Pages
+# (https://majramz.github.io/eventsport-tvguide/tv_guide.json).
+name: Guide TV quotidien
+
+on:
+  schedule:
+    - cron: "15 3 * * *"   # 03:15 UTC (après la mise à jour de xmltvfr.fr)
+    - cron: "15 11 * * *"  # 11:15 UTC : rattrape les changements de programme
+  workflow_dispatch:       # lancement à la main depuis l'onglet Actions
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart test
+      - run: dart run bin/build_tv_guide.dart --out public/tv_guide.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
