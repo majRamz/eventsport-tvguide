@@ -158,8 +158,9 @@ String normalize(String s) {
 List<List<String>> _teamPhrases(String team) {
   final n = normalize(team);
   final aliases = <String>{...?_aliases[n]};
-  // Sélections : nom français du pays (« Italy » → « italie »).
-  for (final entry in countryNamesFr.entries) {
+  // Sélections : nom français du pays (« Italy » → « italie »,
+  // « Congo DR » → « rd congo »).
+  for (final entry in allCountryNamesFr.entries) {
     if (normalize(entry.key) == n) aliases.add(normalize(entry.value));
   }
   for (final entry in _aliases.entries) {
