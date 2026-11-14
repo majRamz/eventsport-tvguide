@@ -26,12 +26,37 @@ class FixtureRef {
     required this.kickoffUtc,
     required this.home,
     required this.away,
+    this.league = '',
+    this.homeLogo,
+    this.awayLogo,
+    this.venue,
+    this.city,
   });
 
   final String id;
   final DateTime kickoffUtc;
+
+  /// Noms ESPN bruts (anglais) : l'app les traduit elle-même.
   final String home;
   final String away;
+
+  /// Détails publiés dans `matches` (secours de l'app si ESPN tombe).
+  final String league;
+  final String? homeLogo;
+  final String? awayLogo;
+  final String? venue;
+  final String? city;
+
+  Map<String, Object?> toJson() => {
+        'league': league,
+        'start': kickoffUtc.toUtc().toIso8601String(),
+        'home': home,
+        'away': away,
+        'homeLogo': homeLogo,
+        'awayLogo': awayLogo,
+        'venue': venue,
+        'city': city,
+      };
 }
 
 /// Chaînes de sport retenues (on ignore les chaînes thématiques non sportives).

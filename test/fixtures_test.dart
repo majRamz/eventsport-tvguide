@@ -51,13 +51,20 @@ void main() {
           'competitors': [
             {
               'homeAway': 'home',
-              'team': {'displayName': 'Morocco'}
+              'team': {
+                'displayName': 'Morocco',
+                'logo': 'https://a.espncdn.com/mar.png'
+              }
             },
             {
               'homeAway': 'away',
-              'team': {'displayName': 'Congo DR'}
+              'team': {'displayName': 'Congo DR'} // pas de logo
             },
-          ]
+          ],
+          'venue': {
+            'fullName': 'Stade Prince Moulay Abdellah',
+            'address': {'city': 'Rabat'}
+          },
         }
       ],
     };
@@ -86,5 +93,42 @@ void main() {
     // Pas de troncature à 100 matchs : chaque requête demande `limit=500`.
     expect(queries, everyElement(containsPair('limit', '500')));
     expect(queries, everyElement(containsPair('dates', '202611')));
+
+    // Clé `matches` : seulement les matchs diffusés, noms ESPN bruts.
+    final matches = buildMatches(fixtures, {
+      'espn-42': ['beIN SPORTS 1'],
+      'espn-absent': ['TF1'],
+    });
+    expect(matches, {
+      'espn-42': {
+        'league': 'caf.nations',
+        'start': '2026-11-14T19:00:00.000Z',
+        'home': 'Morocco',
+        'away': 'Congo DR',
+        'homeLogo': 'https://a.espncdn.com/mar.png',
+        'awayLogo': null,
+        'venue': 'Stade Prince Moulay Abdellah',
+        'city': 'Rabat',
+      },
+    });
+    expect(buildMatches(fixtures, {}), isEmpty);
+  });
+
+  test('ESPN en panne partout : erreur, pas de guide vide', () async {
+    final client = MockClient((_) async => http.Response('down', 503));
+    await expectLater(
+      fetchFixtures(kickoff, kickoff.add(const Duration(days: 1)),
+          client: client, onWarning: (_) {}),
+      throwsA(isA<EspnUnavailableException>()),
+    );
+  });
+
+  test('ESPN répond mais sans match : liste vide, pas d’erreur', () async {
+    final client =
+        MockClient((_) async => http.Response(jsonEncode({'events': []}), 200));
+    expect(
+        await fetchFixtures(kickoff, kickoff.add(const Duration(days: 1)),
+            client: client),
+        isEmpty);
   });
 }
