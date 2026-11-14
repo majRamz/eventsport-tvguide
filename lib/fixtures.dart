@@ -6,7 +6,11 @@ import 'matcher.dart';
 
 /// Championnats suivis (identifiants ESPN). Doit rester aligné avec
 /// `SourcesConfig.footballLeagues` dans l'app Event Sport.
-const leagues = ['fra.1', 'uefa.champions', 'eng.1', 'esp.1', 'ita.1', 'ger.1'];
+const leagues = [
+  'fra.1', 'uefa.champions', 'eng.1', 'esp.1', 'ita.1', 'ger.1',
+  // Sélections nationales
+  'uefa.nations', 'fifa.friendly',
+];
 
 /// Matchs entre [from] et [to] (API publique ESPN, sans clé) : une requête
 /// par championnat et par mois. Les identifiants sont ceux de l'app
@@ -50,7 +54,8 @@ FixtureRef? _toFixture(Map<String, dynamic> json) {
     final teams = (comp['competitors'] as List).cast<Map<String, dynamic>>();
     String name(String side) {
       final t = teams.firstWhere((c) => c['homeAway'] == side)['team'] as Map;
-      return (t['shortDisplayName'] ?? t['displayName']) as String;
+      // Nom complet : plus fiable pour les sélections (« Northern Ireland »).
+      return (t['displayName'] ?? t['shortDisplayName']) as String;
     }
 
     return FixtureRef(
