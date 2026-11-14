@@ -96,4 +96,19 @@ void main() {
     expect(result['it'], ['TF1']);
     expect(result['tr'], ['beIN SPORTS 1']);
   });
+
+  test('chaînes avec accents reconnues, chaînes étrangères ignorées', () {
+    final result = matchFixturesToChannels(
+      [
+        FixtureRef(
+            id: 'e', kickoffUtc: kickoff, home: 'England', away: 'Croatia')
+      ],
+      [
+        prog('La chaîne l’Équipe', 'Football : Ligue des nations',
+            'Angleterre / Croatie'),
+        prog('RTL TVI', 'Angleterre / Croatie', ''),
+      ],
+    );
+    expect(result['e'], ['La chaîne l’Équipe']);
+  });
 }
